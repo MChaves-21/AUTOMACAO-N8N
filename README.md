@@ -21,8 +21,6 @@ Automação avançada que filtra feeds RSS, utiliza **Llama 3 (Groq)** para aná
 - **Status:** ✅ Operacional
 - **Tags:** `IA`, `LLM`, `Airtable`, `Gmail`, `RSS`
 
-### 🤖 [Outras Automações]
-*(Adicione aqui seus próximos projetos conforme for criando)*
 
 ---
 
