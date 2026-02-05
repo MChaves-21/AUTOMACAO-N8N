@@ -15,13 +15,13 @@
 ## 📸 Visual do Projeto
 
 ### O Fluxo (n8n)
-![Workflow do ATLAS](./img/workflow-completo.png)
+![Workflow do ATLAS](./IMG/workflow-completo.png)
 
 ### Inteligência em Dados (Airtable)
-![Banco de Dados](./img/banco-airtable.png)
+![Banco de Dados](./IMG/banco-airtable.png)
 
 ### Entrega Final (E-mail)
-![Exemplo de E-mail](./img/exemplo-email.png)
+![Exemplo de E-mail](./IMG/exemplo-email.png)
 
 ## 🛠️ Tecnologias Utilizadas
 
