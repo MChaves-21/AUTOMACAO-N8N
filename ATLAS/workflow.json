@@ -1,0 +1,197 @@
+{
+  "name": "Jornal Diario - Automação IA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "node-trigger-diario",
+      "name": "Executa 1x por dia",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [1792, 1184]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $getWorkflowStaticData('global');\nconst hoje = new Date().toISOString().split('T')[0];\nif (data.ultimoEnvio === hoje) return [];\nreturn [{ json: { hoje } }];"
+      },
+      "id": "node-check-hoje",
+      "name": "Já enviou hoje?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1968, 1184]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/portuguese/rss.xml",
+        "options": {}
+      },
+      "id": "node-rss-bbc",
+      "name": "RSS BBC",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [2160, 1104]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "id": "node-rss-tech",
+      "name": "RSS TechCrunch",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [2160, 1264]
+    },
+    {
+      "parameters": {},
+      "id": "node-merge",
+      "name": "Merge RSS",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2368, 1184]
+    },
+    {
+      "parameters": {
+        "jsCode": "const DAY = 24 * 60 * 60 * 1000;\nconst now = Date.now();\nreturn items.filter(item => {\n  const d = new Date(item.json.isoDate || item.json.pubDate);\n  return now - d.getTime() <= DAY;\n});"
+      },
+      "id": "node-filter-24h",
+      "name": "Filtra últimas 24h",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2560, 1184]
+    },
+    {
+      "parameters": {
+        "maxItems": 15
+      },
+      "id": "node-limit",
+      "name": "Limita para IA",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [2768, 1184]
+    },
+    {
+      "parameters": {
+        "jsCode": "let texto = '';\nif (items.length === 0) return []; \nfor (const item of items) {\n  texto += `TÍTULO: ${item.json.title}\\nLINK: ${item.json.link}\\n---\\n`;\n}\nreturn [{ json: { texto_para_ia: texto } }];"
+      },
+      "id": "node-prep-ia",
+      "name": "Prepara texto para IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2960, 1184]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resposta = $json.text || $json.output || '';\nif (!resposta || resposta.trim() === '') return [];\nconst matchTitulo = resposta.match(/TITULO_EMAIL:\\s*(.*)/);\nlet tituloEmail = matchTitulo ? matchTitulo[1].replace(/[\\*\\🗞️]/g, '').trim() : 'Resumo Diário';\nconst blocos = resposta.split(/<div style=\"margin-bottom: 35px;/g);\nif (blocos.length > 1) blocos.shift();\nlet noticiasParaAirtable = [];\nfor (let bloco of blocos) {\n    try {\n        const manchete = bloco.match(/<h3.*?>(.*?)<\\/h3>/);\n        const resumo = bloco.match(/<p.*?>(.*?)<\\/p>/);\n        const categoria = bloco.match(/class=\"cat\">(.*?)<\\/span>/);\n        const sentimento = bloco.match(/class=\"sent\">(.*?)<\\/span>/);\n        const link = bloco.match(/href=\"(.*?)\"/);\n        if (manchete && resumo) {\n            noticiasParaAirtable.push({\n                \"Manchete\": manchete[1].replace(/^\\d+\\.\\s*/, '').trim(),\n                \"Resumo\": resumo[1].trim(),\n                \"Categoria\": categoria ? categoria[1].trim() : \"Geral\",\n                \"Sentimento\": sentimento ? sentimento[1].trim() : \"🟡 Neutro\",\n                \"Link\": link ? link[1].trim() : \"\",\n                \"Assunto do Dia\": tituloEmail,\n                \"Data\": new Date().toISOString()\n            });\n        }\n    } catch (e) { continue; }\n}\nlet corpoHtml = resposta.replace(/TITULO_EMAIL:.*\\n?/, '').trim();\nconst indexDiv = corpoHtml.indexOf('<div');\nif (indexDiv !== -1) corpoHtml = corpoHtml.substring(indexDiv);\nif (noticiasParaAirtable.length === 0) throw new Error(\"Falha na extração.\");\nreturn [{ json: { titulo_email: tituloEmail, corpo_email: corpoHtml, noticias_lista: noticiasParaAirtable } }];"
+      },
+      "id": "node-valida-cod",
+      "name": "Valida conteúdo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3632, 1184]
+    },
+    {
+      "parameters": {
+        "sendTo": "seu-email@gmail.com",
+        "subject": "={{ $json.titulo_email }}",
+        "message": "=<div style=\"font-family: sans-serif; max-width: 650px; margin: auto;\">\n  <div style=\"background: #111827; color: white; padding: 20px;\">\n    <h1>Jornal Diário</h1>\n  </div>\n  <div style=\"padding: 20px;\">\n    {{ $json.corpo_email }}\n  </div>\n</div>",
+        "options": { "appendAttribution": false }
+      },
+      "id": "node-gmail",
+      "name": "ENVIA O EMAIL",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [3808, 1280]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $getWorkflowStaticData('global');\nif (!data.linksEnviados) data.linksEnviados = [];\nfor (const item of items) {\n  if (item.json.link) data.linksEnviados.push(item.json.link);\n}\ndata.linksEnviados = data.linksEnviados.slice(-300);\ndata.ultimoEnvio = new Date().toISOString().split('T')[0];\nreturn items;"
+      },
+      "id": "node-marca-enviado",
+      "name": "Marca como enviado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3968, 1280]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=[SISTEMA: TRADUZA TUDO PARA PORTUGUÊS DO BRASIL...]"
+      },
+      "id": "node-llm-chain",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [3344, 1184],
+      "onError": "retry"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "id": "node-groq-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [3344, 1424]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $getWorkflowStaticData('global');\nconst links = data.linksEnviados || [];\nreturn items.filter(item => !links.includes(item.json.link));"
+      },
+      "id": "node-remove-dupes",
+      "name": "Remove ja enviadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3168, 1184]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "noticias_lista"
+      },
+      "id": "node-split",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [3808, 1120]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": { "__rl": true, "value": "app-id-aqui", "mode": "id" },
+        "table": { "__rl": true, "value": "table-id-aqui", "mode": "id" },
+        "columns": { "mappingMode": "autoMapInputData" }
+      },
+      "id": "node-airtable",
+      "name": "Create a record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [3968, 1120],
+      "onError": "retry"
+    }
+  ],
+  "connections": {
+    "Executa 1x por dia": { "main": [[{ "node": "Já enviou hoje?", "index": 0 }]] },
+    "Já enviou hoje?": { "main": [[{ "node": "RSS BBC", "index": 0 }, { "node": "RSS TechCrunch", "index": 0 }]] },
+    "RSS BBC": { "main": [[{ "node": "Merge RSS", "index": 0 }]] },
+    "RSS TechCrunch": { "main": [[{ "node": "Merge RSS", "index": 1 }]] },
+    "Merge RSS": { "main": [[{ "node": "Filtra últimas 24h", "index": 0 }]] },
+    "Filtra últimas 24h": { "main": [[{ "node": "Limita para IA", "index": 0 }]] },
+    "Limita para IA": { "main": [[{ "node": "Prepara texto para IA", "index": 0 }]] },
+    "Prepara texto para IA": { "main": [[{ "node": "Remove ja enviadas", "index": 0 }]] },
+    "Remove ja enviadas": { "main": [[{ "node": "Basic LLM Chain", "index": 0 }]] },
+    "Basic LLM Chain": { "main": [[{ "node": "Valida conteúdo", "index": 0 }]] },
+    "Valida conteúdo": { "main": [[{ "node": "Split Out", "index": 0 }, { "node": "ENVIA O EMAIL", "index": 0 }]] },
+    "Split Out": { "main": [[{ "node": "Create a record", "index": 0 }]] },
+    "ENVIA O EMAIL": { "main": [[{ "node": "Marca como enviado", "index": 0 }]] },
+    "Groq Chat Model": { "ai_languageModel": [[{ "node": "Basic LLM Chain", "index": 0 }]] }
+  }
+}
