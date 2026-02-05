@@ -34,6 +34,3 @@ Automação avançada que filtra feeds RSS, utiliza **Llama 3 (Groq)** para aná
 
 ## 🛡️ Segurança & Privacidade
 Os arquivos `.json` exportados neste repositório **não contêm credenciais sensíveis** (tokens, senhas ou chaves de API). O n8n remove essas informações automaticamente durante a exportação. Ao importar, você deverá configurar suas próprias credenciais no painel do n8n.
-
----
-📫 **Contato:** [Seu e-mail ou LinkedIn]
