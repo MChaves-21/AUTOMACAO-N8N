@@ -1,0 +1,124 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "uptime-monitor",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        1584
+      ],
+      "id": "76cb4b0d-8946-42df-a00b-cef36ed4016a",
+      "webhookId": "61fafc07-a740-4d41-9f90-93164a7a07d5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.evento }}",
+              "value2": "DOWN"
+            }
+          ]
+        }
+      },
+      "name": "If Caiu?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        1584
+      ],
+      "id": "4e70580b-6012-40b6-ade6-fcf5dfea94da"
+    },
+    {
+      "parameters": {
+        "chatId": "6219782291",
+        "text": "=🚨 *SITE FORA DO AR* 🚨\n\n*Site:* {{ $json.body.site }}\n❌ *Erro:* {{ $json.body.erro_msg }}\n⏱️ *Latência:* {{ $json.body.latencia }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Telegram - Alerta",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        1472
+      ],
+      "id": "762c3ce5-6038-41b3-a930-32e98b0f2486",
+      "webhookId": "ad8c5356-3d98-41c8-8c84-1b6e90078806",
+      "credentials": {
+        "telegramApi": {
+          "id": "qKDXcZwXtNlSTbem",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6219782291",
+        "text": "=✅ *SITE DE VOLTA* ✅\n\n*Site:* {{ $json.body.site }}\n⏳ *Ficou fora por:* {{ $json.body.tempo_fora }} minutos\n🚀 *Latência atual:* {{ $json.body.latencia }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Telegram - Retorno",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        1680
+      ],
+      "id": "e01ef561-fc3a-47f9-a04e-45e2ee2fc5a6",
+      "webhookId": "002baa63-5042-4ee5-a1f1-f26732816c0a",
+      "credentials": {
+        "telegramApi": {
+          "id": "qKDXcZwXtNlSTbem",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If Caiu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Caiu?": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram - Retorno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ddfa0032924ccb4a58977b3cdb22d33feaeb799d415bd8401cd912054d43038"
+  }
+}
