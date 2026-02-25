@@ -14,14 +14,14 @@
 
 ## 📸 Visual do Projeto
 
-### O Fluxo (n8n)
-![Workflow do ATLAS](./img/workflow-completo.png)
+### 🌐 Workflow (n8n)
+O coração da automação, conectando gatilhos de tempo, IA e APIs de saída.
+![Workflow do ATLAS](img/workflow-completo.png)
 
-### Inteligência em Dados (Airtable)
-![Banco de Dados](./img/banco-airtable.png)
-
-### Entrega Final (E-mail)
-![Exemplo de E-mail](./img/exemplo-email.png)
+### 📊 Interface e Entrega
+| Inteligência em Dados (Airtable) | Entrega Final (E-mail) |
+| :---: | :---: |
+| ![Banco de Dados](img/banco-airtable.png) | ![Exemplo de E-mail](img/exemplo-email.png) |
 
 ## 🛠️ Tecnologias Utilizadas
 
