@@ -16,12 +16,12 @@
 
 ### 🌐 Workflow (n8n)
 O coração da automação, conectando gatilhos de tempo, IA e APIs de saída.
-![Workflow do ATLAS](img/workflow-completo.png)
+![Workflow do ATLAS](IMG/workflow-completo.png)
 
 ### 📊 Interface e Entrega
 | Inteligência em Dados (Airtable) | Entrega Final (E-mail) |
 | :---: | :---: |
-| ![Banco de Dados](img/banco-airtable.png) | ![Exemplo de E-mail](img/exemplo-email.png) |
+| ![Banco de Dados](IMG/banco-airtable.png) | ![Exemplo de E-mail](IMG/exemplo-email.png) |
 
 ## 🛠️ Tecnologias Utilizadas
 
