@@ -67,7 +67,7 @@ cd "AUTOMACAO-N8N/Monitor uptime"
 npm install
 ```
 
-Crie o arquivo `bot/.env`:
+Copie o `bot/.env.example` para `bot/.env` e preencha:
 
 ```env
 AIRTABLE_PAT=seu_token
@@ -81,3 +81,5 @@ Importe o fluxo `json/uptime-monitor-flow.json` no n8n (**Workflows → Import f
 ```bash
 npm start
 ```
+
+Ou, com Docker, a partir da raiz do repositório: `docker compose up -d` (sobe o robô junto com o n8n).
