@@ -1,5 +1,5 @@
 require('dotenv').config({ path: './bot/.env' });
-import { create, get, post } from 'axios';
+const { create, get, post } = require('axios');
 
 const { AIRTABLE_PAT, BASE_ID, TABLE_ID, N8N_WEBHOOK_URL } = process.env;
 

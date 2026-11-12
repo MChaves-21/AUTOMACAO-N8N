@@ -1,91 +1,83 @@
-## 📸 Demonstração do Sistema
+# 📡 Monitor de Uptime (Node.js + Airtable + n8n)
 
-Abaixo, você pode conferir o funcionamento integrado entre o Bot, Airtable e as notificações em tempo real.
+Monitor de disponibilidade de sites no estilo do UptimeRobot. Um robô em **Node.js** checa cada site a cada minuto, guarda status, latência e incidentes no **Airtable** (que também calcula o SLA) e avisa pelo **Telegram**, via webhook do **n8n**, quando um site cai e quando volta.
 
-### 1. Painel de Controle (Airtable)
-Visualização da tabela principal com status em tempo real, latência e o cálculo automático de disponibilidade (SLA).
-![Painel de Monitoramento](./img/uptime1.png)
+## 📸 Demonstração
 
-### 2. Histórico de Incidentes
-Registro detalhado de cada evento de queda e retorno, utilizando vínculos relacionais para associar logs aos sites específicos.
-![Logs de Incidentes](./img/uptime2.png)
+### 1. Painel de controle (Airtable)
+Status em tempo real, latência e o cálculo automático de disponibilidade (SLA).
+![Painel de monitoramento](./img/uptime1.png)
 
-### 3. Notificações Mobile (Telegram)
-Alertas instantâneos enviados via n8n informando o erro detectado e o tempo total de inatividade após o restabelecimento.
-![Alertas Telegram](./img/image_d3dfa3.jpg)
+### 2. Histórico de incidentes
+Cada queda e cada retorno ficam registrados e vinculados ao site pelo Record ID.
+![Logs de incidentes](./img/uptime2.png)
 
-# 🚀 SaaS Uptime Monitor (Node.js + Airtable + n8n)
+### 3. Alertas no Telegram
+O n8n recebe o evento e manda o erro detectado e, no retorno, o tempo total fora do ar.
+![Alertas no Telegram](./img/uptime3.jpeg)
 
-Um sistema de monitoramento de disponibilidade de sites robusto, inspirado em ferramentas como UptimeRobot. O projeto utiliza um robô em Node.js para checagem de status, Airtable como banco de dados relacional e motor de cálculo de SLA, e n8n para orquestração de alertas via Telegram.
+## 🛠️ Tecnologias
 
-## 🛠️ Tecnologias Utilizadas
+- **Node.js + Axios**: checagem HTTP, medição de latência e chamadas às APIs
+- **Airtable**: banco relacional (sites + histórico) e fórmula de SLA
+- **n8n**: recebe o webhook e orquestra os alertas
+- **Telegram Bot API**: canal de alertas
 
-* **Node.js**: Motor principal do bot de monitoramento.
-* **Airtable**: Banco de dados relacional e cálculo automático de Uptime %.
-* **n8n**: Automação de workflow e notificações via Webhook.
-* **Telegram API**: Canal de alertas em tempo real.
-* **Axios**: Para requisições HTTP e integração com APIs.
+## ✨ Como funciona
 
-## ✨ Funcionalidades
+```
+a cada 60s ─► bot/uptime.js ─► GET em cada URL cadastrada no Airtable
+                   │
+                   ├─ site OK ............ atualiza status e latência
+                   ├─ site caiu agora .... registra QUEDA + webhook DOWN ─► n8n ─► Telegram
+                   └─ site voltou ........ registra RETORNO com minutos fora + webhook UP
+```
 
-- **Monitoramento 24/7**: Checagem de status HTTP e latência a cada minuto.
-- **Banco de Dados Relacional**: Logs de incidentes vinculados automaticamente aos sites através de IDs únicos (Record IDs).
-- **Cálculo de Uptime % (SLA)**: Fórmula automatizada que desconta o tempo de inatividade do total mensal (base 30 dias/43.200 min).
-- **Notificações Inteligentes**: Alertas de queda (DOWN) e retorno (UP) com tempo total de inatividade.
-- **Histórico de Incidentes**: Registro detalhado de motivos de erro para auditoria.
+- Checagem de status HTTP e latência a cada minuto (timeout de 15 s)
+- Só notifica na **mudança de estado**, sem repetir alerta enquanto o site continua fora
+- Logs de incidentes vinculados ao site (campo de link do Airtable)
+- Uptime % calculado sobre um mês de 30 dias (43.200 minutos)
 
-## 🏗️ Estrutura da Base Airtable
+## 🏗️ Estrutura da base no Airtable
 
-O sistema exige duas tabelas conectadas:
+1. **Sites monitorados** (tabela principal)
+   - `Nome do Site` (texto), `URL` (URL)
+   - `Status Atual` (seleção única: ONLINE/OFFLINE)
+   - `Mensagem de Erro`, `Latencia` (texto)
+   - `Duracao` (rollup: soma da duração dos incidentes)
+   - `Uptime %` (fórmula abaixo)
+2. **Historico_Incidentes**
+   - `Site_Link` (link para a tabela principal)
+   - `Evento` (QUEDA/RETORNO), `Duracao` (número, minutos), `Data/Hora`, `Erro/Motivo`
 
-1.  **Sites Monitorados (Principal)**:
-    - `Nome do Site` (Texto)
-    - `URL` (URL)
-    - `Status Atual` (Single Select: ONLINE/OFFLINE)
-    - `Duracao` (Rollup: Soma o campo duração da tabela de logs)
-    - `Uptime %` (Fórmula de cálculo de SLA)
-2.  **Historico_Incidentes (Logs)**:
-    - `Site_Link` (Link to another record: Conecta à tabela principal)
-    - `Evento` (QUEDA/RETORNO)
-    - `Duracao` (Number: Minutos fora do ar)
-    - `Data/Hora` (Texto/Data)
+Fórmula do SLA:
 
-## 🚀 Como Configurar
-
-### 1. Clonar o repositório
-```bash
-git clone [https://github.com/SEU_USUARIO/nome-do-seu-repositorio.git](https://github.com/SEU_USUARIO/nome-do-seu-repositorio.git)
-cd nome-do-seu-repositorio
-2. Configurar o Bot (Node.js)
-Entre na pasta bot/, instale as dependências e configure o seu .env:
-
-Bash
-cd bot
-npm install
-Crie um arquivo .env:
-
-Snippet de código
-AIRTABLE_PAT=seu_token_aqui
-BASE_ID=id_da_sua_base
-TABLE_ID=id_da_tabela_principal
-N8N_WEBHOOK_URL=link_do_seu_webhook_n8n
-3. Importar Workflow n8n
-Abra seu n8n.
-
-Crie um novo workflow.
-
-No menu, selecione Import from File e escolha o arquivo workflow-n8n/uptime-monitor-flow.json.
-
-Configure as suas credenciais do Telegram.
-
-4. Rodar a aplicação
-Bash
-node uptime.js
-📊 Cálculo de SLA (Fórmula Airtable)
-Para calcular a disponibilidade, utilizamos a seguinte fórmula no Airtable:
-
-Snippet de código
-IF({Duracao} > 0, 
-  ROUND((1 - ({Duracao} / 43200)) * 100, 2) & "%", 
+```
+IF({Duracao} > 0,
+  ROUND((1 - ({Duracao} / 43200)) * 100, 2) & "%",
   "100%"
 )
+```
+
+## 🚀 Como rodar
+
+```bash
+git clone https://github.com/MChaves-21/AUTOMACAO-N8N.git
+cd "AUTOMACAO-N8N/Monitor uptime"
+npm install
+```
+
+Crie o arquivo `bot/.env`:
+
+```env
+AIRTABLE_PAT=seu_token
+BASE_ID=id_da_base
+TABLE_ID=id_da_tabela_principal
+N8N_WEBHOOK_URL=url_do_webhook_no_n8n
+```
+
+Importe o fluxo `json/uptime-monitor-flow.json` no n8n (**Workflows → Import from File**), configure a credencial do Telegram e ative o workflow. Depois:
+
+```bash
+npm start
+```

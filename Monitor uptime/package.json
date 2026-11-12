@@ -1,10 +1,10 @@
 {
   "name": "monitor-uptime",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Monitor de uptime: checa sites a cada minuto, grava no Airtable e alerta via n8n/Telegram",
+  "main": "bot/uptime.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node bot/uptime.js"
   },
   "keywords": [],
   "author": "",
